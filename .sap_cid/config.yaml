@@ -2,9 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-    _additional:
-      stringVariables:
-        - name: KPSTR
-          value: "kp-str-${1+1}-7788"
-    runLast:
-      command: "echo KPGS-A-${1+1}-B; echo \"KPDQ1\"; echo 'KPSQ1'; echo KPSTRVAL=$KPSTR; echo KPDONE"
