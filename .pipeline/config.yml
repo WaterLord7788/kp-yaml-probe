@@ -2,3 +2,4 @@ general:
   buildTool: 'mta'
   verbose: true
   globalExtensionsRepository: 'https://github.com/WaterLord7788/kp-globext-probe.git'
+  globalExtensionsRepositoryCredentialsId: 'kp-nonexistent-cred-7788'
