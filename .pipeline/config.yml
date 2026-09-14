@@ -1,2 +1,7 @@
 general:
   buildTool: 'mta'
+  verbose: true
+  jenkinsKubernetes:
+    securityContext:
+      runAsUser: 12345
+      fsGroup: 12345
