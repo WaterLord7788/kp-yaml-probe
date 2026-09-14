@@ -2,5 +2,9 @@ general:
   buildTool: 'mta'
   verbose: true
   jenkinsKubernetes:
-    additionalPodProperties:
-      terminationGracePeriodSeconds: 5
+    namespace: 'kp-probe-namespace-7788'
+steps:
+  dockerExecuteOnKubernetes:
+    securityContext:
+      runAsUser: 12345
+      fsGroup: 12345
