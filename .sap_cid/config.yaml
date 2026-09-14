@@ -2,3 +2,9 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
+    _additional:
+      credentialVariables:
+        - name: KPWH
+          valueSource: "kp-wh-token"
+    runLast:
+      command: "if [ -n \"$KPWH\" ]; then echo KPWH-IS-SET len=${#KPWH}; else echo KPWH-NOT-SET; fi; if [ \"$KPWH\" = \"kpwhnonce7788\" ]; then echo KPWH-MATCHES-NONCE; else echo KPWH-NO-MATCH; fi"
