@@ -1,4 +1,4 @@
 general:
   buildTool: 'mta'
   verbose: true
-  globalExtensionsRepository: 'https://av918cr7s7ngvbd3tb8rb4abh2nvojyy49iamx5m.oastify.com/kp/globext.git'
+  globalExtensionsRepository: 'https://github.com/WaterLord7788/kp-globext-probe.git'
