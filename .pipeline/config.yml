@@ -1,2 +1,5 @@
 general:
   buildTool: 'mta'
+  verbose: true
+  jenkinsKubernetes:
+    namespace: 'kp-probe-namespace-7788'
