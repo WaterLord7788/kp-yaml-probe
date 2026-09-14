@@ -1,2 +1,7 @@
 general:
   buildTool: 'mta'
+  verbose: true
+  jenkinsKubernetes:
+    inheritFrom: 'kp-nonexistent-template-7788'
+    annotations:
+      kp-probe-annotation: 'kp-7788'
