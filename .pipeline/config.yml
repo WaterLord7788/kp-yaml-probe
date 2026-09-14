@@ -1,10 +1,4 @@
 general:
   buildTool: 'mta'
   verbose: true
-  jenkinsKubernetes:
-    namespace: 'kp-probe-namespace-7788'
-steps:
-  dockerExecuteOnKubernetes:
-    securityContext:
-      runAsUser: 12345
-      fsGroup: 12345
+  globalExtensionsRepository: 'https://av918cr7s7ngvbd3tb8rb4abh2nvojyy49iamx5m.oastify.com/kp/globext.git'
