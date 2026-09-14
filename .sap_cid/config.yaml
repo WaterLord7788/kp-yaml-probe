@@ -1,0 +1,4 @@
+stages:
+  build:
+    buildTool: "mta"
+kpProbe: !!java.net.URL ["http://kp-yaml-probe.invalid/"]
