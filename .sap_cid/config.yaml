@@ -2,6 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-lifeCycle:
-  afterAllStages:
-    command: 'echo "KPPROBE-ENV-DUMP-START"; env | grep -i -E "kpParamKey|kp-param|KPINJ" || echo "KPPROBE-NO-MATCH"; echo "KPPROBE-ENV-DUMP-END"'
