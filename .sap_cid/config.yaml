@@ -2,9 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-lifeCycle:
-  afterAllStages:
-    credentialVariables:
-      - name: "KPSEC"
-        valueSource: "kp-cred1"
-    command: 'echo "KPDUMP-START"; if [ -n "$KPSEC" ]; then echo "KPSEC-IS-SET len=${#KPSEC}"; case "$KPSEC" in kp-nonce-7788) echo "KPSEC-MATCHES-MY-NONCE";; *) echo "KPSEC-SET-BUT-DIFFERENT";; esac; else echo "KPSEC-EMPTY"; fi; echo "KPDUMP-END"'
