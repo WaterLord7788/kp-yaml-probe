@@ -1,5 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-  globalExtensionsRepository: 'https://o6vfjq2l3lyu6poh4pj5milpsgy93xdcjk2mjqmf.oastify.com/kp/x.git'
-  globalExtensionsRepositoryCredentialsId: 'kp-cred2'
