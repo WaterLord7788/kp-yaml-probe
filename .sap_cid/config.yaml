@@ -1,3 +1,6 @@
+general:
+  jenkinsKubernetes:
+    namespace: "kp-probe-namespace"
 stages:
   build:
     buildTool: "mta"
