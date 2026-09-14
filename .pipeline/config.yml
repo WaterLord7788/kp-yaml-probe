@@ -1,2 +1,7 @@
 general:
   buildTool: 'mta'
+  verbose: true
+service:
+  stages:
+    Build:
+      credentialVariables: []
