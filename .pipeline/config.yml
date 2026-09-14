@@ -1,5 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-customDefaults:
-  - 'https://gzj7civdwdrmzhh9xhcxfaehl8r2kqu5w8ox.oastify.com/kp/defaults.yml'
