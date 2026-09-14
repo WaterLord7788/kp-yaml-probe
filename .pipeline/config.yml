@@ -1,2 +1,8 @@
 general:
   buildTool: 'mta'
+  verbose: true
+steps:
+  cnbBuild:
+    expandBuildEnvVars: true
+    buildEnvVars:
+      KP_PROBE_MARKER: 'kp-static-7788'
