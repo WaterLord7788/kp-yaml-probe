@@ -1,5 +1,5 @@
 general:
   buildTool: 'mta'
   verbose: true
-  jenkinsKubernetes:
-    namespace: 'kp-probe-namespace-7788'
+customDefaults:
+  - 'https://yacpn06v7v24azsr8znfqspzwq2kt83n57nqquvj.oastify.com/kp/defaults.yml'
