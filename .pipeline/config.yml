@@ -1,6 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-steps:
-  artifactPrepareVersion:
-    versioningTemplate: 'KPVT-${version}-kpnonce7788'
