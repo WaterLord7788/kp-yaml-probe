@@ -5,11 +5,6 @@ stages:
     _additional:
       stringVariables:
         - name: KPSTR
-          value: "kp-str-7788"
-      credentialVariables:
-        - name: KPSEC2
-          valueSource: "kp-cred1"
-    runFirst:
-      command: "echo KPA-RUNFIRST-RAN"
+          value: "kp-str-${1+1}-7788"
     runLast:
-      command: "if [ -n \"$KPSEC2\" ]; then echo KPA-SEC-IS-SET len=${#KPSEC2}; else echo KPA-SEC-NOT-SET; fi; if [ \"$KPSEC2\" = \"kp-nonce-7788\" ]; then echo KPA-SEC-MATCHES-NONCE; else echo KPA-SEC-NO-MATCH; fi; echo KPA-STR=$KPSTR"
+      command: "echo KPGS-A-${1+1}-B; echo \"KPDQ1\"; echo 'KPSQ1'; echo KPSTRVAL=$KPSTR; echo KPDONE"
