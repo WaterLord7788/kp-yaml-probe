@@ -1,3 +1,2 @@
 general:
-  buildTool: 'maven'
-  verbose: true
+  buildTool: 'mta'
