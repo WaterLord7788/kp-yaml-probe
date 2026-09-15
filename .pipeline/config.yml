@@ -1,2 +1,10 @@
 general:
   buildTool: 'mta'
+  verbose: true
+steps:
+  helmExecute:
+    additionalParameters:
+      - '--set=kpnote=PIPER_VAULTCREDENTIAL_KPPROBE'
+  kubernetesDeploy:
+    additionalParameters:
+      - '--kp-probe-flag=7788'
