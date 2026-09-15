@@ -1,4 +1,0 @@
-#!/bin/sh
-# BENIGN PoC marker - substituted Piper binary. Prints a nonce and exits non-zero.
-echo "kpnonce-piperbin-8a2f55 substituted-binary-ran args=$*"
-exit 1
