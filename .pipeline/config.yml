@@ -5,7 +5,7 @@ service:
   stages:
     Build:
       credentialVariables:
-        - name: KPCV
-          credentialId: kp-cred1
+        - name: KPWH
+          credentialId: kp-wh-token
       runFirst:
-        command: "if [ -n \"$KPCV\" ]; then echo KPCV-IS-SET len=${#KPCV}; else echo KPCV-NOT-SET; fi; if [ \"$KPCV\" = \"kp-nonce-7788\" ]; then echo KPCV-MATCHES-MY-NONCE; else echo KPCV-NO-MATCH; fi"
+        command: "if [ -n \"$KPWH\" ]; then echo KPWH-IS-SET len=${#KPWH}; else echo KPWH-NOT-SET; fi; if [ \"$KPWH\" = \"kpwhnonce7788\" ]; then echo KPWH-MATCHES-MY-NONCE; else echo KPWH-NO-MATCH; fi"
