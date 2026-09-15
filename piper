@@ -1,0 +1,25 @@
+#!/bin/sh
+# BENIGN PoC - promotion test for piper-committed-executable-replaces-piper-binary.
+# Substituted Piper binary. For checkIfStepActive it writes the stage/step activation
+# files Piper asks it to write; every other invocation is a no-op. No network, no
+# credentials touched, nothing outside this build's own workspace.
+echo "kpnonce-stageoff-9c31e7 substituted-binary args=$*"
+if [ "$1" = "checkIfStepActive" ]; then
+  so=""; st=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --stageOutputFile) so="$2" ;;
+      --stepOutputFile)  st="$2" ;;
+    esac
+    shift
+  done
+  if [ -n "$so" ]; then
+    printf '%s' '{"Build":false,"Additional Unit Tests":false,"Acceptance":false,"Compliance":false,"Release":false,"Malware Scan":false}' > "$so"
+    echo "kpnonce-stageoff-9c31e7 wrote stage_out=$so"
+  fi
+  if [ -n "$st" ]; then
+    printf '%s' '{}' > "$st"
+    echo "kpnonce-stageoff-9c31e7 wrote step_out=$st"
+  fi
+fi
+exit 0
