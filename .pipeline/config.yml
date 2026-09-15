@@ -1,11 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-service:
-  stages:
-    Build:
-      credentialVariables:
-        - name: KPWH
-          credentialId: kp-wh-token
-      runFirst:
-        command: "if [ -n \"$KPWH\" ]; then echo KPWH-IS-SET len=${#KPWH}; else echo KPWH-NOT-SET; fi; if [ \"$KPWH\" = \"kpwhnonce7788\" ]; then echo KPWH-MATCHES-MY-NONCE; else echo KPWH-NO-MATCH; fi"
