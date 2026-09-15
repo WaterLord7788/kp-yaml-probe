@@ -1,18 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-stages:
-  Upload:
-    enabled: true
-  Deploy:
-    enabled: false
-  'Integration Test':
-    enabled: false
-service:
-  stages:
-    Upload:
-      credentialVariables:
-        - name: KPCV
-          credentialId: kp-cred1
-      runFirst:
-        command: "if [ -n \"$KPCV\" ]; then echo KPCV-IS-SET len=${#KPCV}; else echo KPCV-NOT-SET; fi; if [ \"$KPCV\" = \"kp-nonce-7788\" ]; then echo KPCV-MATCHES-MY-NONCE; else echo KPCV-NO-MATCH; fi"
