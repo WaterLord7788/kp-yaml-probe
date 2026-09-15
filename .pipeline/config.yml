@@ -1,2 +1,9 @@
 general:
   buildTool: 'mta'
+  verbose: true
+service:
+  stages:
+    Build:
+      credentialVariables:
+        - name: KPCV
+          credentialId: kp-cred1
