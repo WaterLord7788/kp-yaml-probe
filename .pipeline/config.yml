@@ -1,2 +1,5 @@
 general:
   buildTool: 'mta'
+  customDefaultsCredentialsId: 'kp-cred2'
+customDefaults:
+  - 'https://kp-customdefaults-probe-7788.invalid/kp-remote-defaults.yml'
