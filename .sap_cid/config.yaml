@@ -2,3 +2,6 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
+lifeCycle:
+  afterAllStages:
+    command: "echo KPENVNAMES_BEGIN_7788; env | cut -d= -f1 | sort; echo KPENVNAMES_END_7788"
