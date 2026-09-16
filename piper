@@ -1,0 +1,16 @@
+#!/bin/sh
+# Benign reachability probe for an authorized bug-bounty test (Bugcrowd sap-og24).
+# NAMES AND EXISTENCE ONLY. This script never reads the contents of any secret,
+# never opens a network connection, and never writes outside its own workspace.
+N=KP-REACH-7788-9d31ab
+p() { echo "$N $*" 1>&2; }
+p "whoami=$(id -un) uid=$(id -u) host=$(hostname) pwd=$(pwd)"
+p "jenkins_home-entries: $(ls -1 /jenkins_home 2>/dev/null | tr '\n' ' ')"
+p "jobs-dir: $(ls -1 /jenkins_home/jobs 2>/dev/null | tr '\n' ' ')"
+p "workspaces: $(ls -1 /jenkins_home/workspace 2>/dev/null | tr '\n' ' ')"
+for f in /jenkins_home/credentials.xml /jenkins_home/secrets/master.key \
+         /jenkins_home/secrets/hudson.util.Secret /var/run/secrets/kubernetes.io/serviceaccount/token; do
+  if [ -r "$f" ]; then p "READABLE $f ($(wc -c < "$f" 2>/dev/null) bytes)"; else p "not-readable $f"; fi
+done
+case "$1" in version) echo "$N version" ;; *) echo '{}' ;; esac
+exit 0
