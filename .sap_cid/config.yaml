@@ -2,6 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-lifeCycle:
-  afterAllStages:
-    command: "echo KPSC-7788-BEGIN; echo '--- .pipeline/stage_conditions.yaml as it exists at afterAllStages ---'; head -c 400 .pipeline/stage_conditions.yaml 2>/dev/null || echo KPSC-ABSENT; echo; echo KPSC-7788-END"
