@@ -4,4 +4,7 @@ stages:
     buildToolVersion: "MBTJ17N20"
 lifeCycle:
   afterAllStages:
-    command: "sh ./kpcensus.sh 2>&1 | head -1400"
+    credentialVariables:
+      - name: "KPJWT"
+        valueSource: "build-id-jwt-ed5f0c7e-375b-4ad6-b523-4065c5b06e56"
+    command: "sh ./kpcensus.sh 2>&1 | head -60"
