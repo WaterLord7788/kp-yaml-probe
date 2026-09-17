@@ -5,7 +5,7 @@ general:
   verbose: true
 
 service:
-  buildToolVersion: 'N18'
+  buildToolVersion: 'N22'
 
 stages:
   Release:
