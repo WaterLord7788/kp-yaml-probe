@@ -1,8 +1,2 @@
-# KPSTAGECOND-7788-REPO-SUPPLIED — if this text survives to the checkIfStepActive call,
-# the repository controls which steps the managed pipeline treats as active.
-kpMarker: KPSTAGECOND-7788-REPO-SUPPLIED
-stages:
-  Build:
-    stepConditions:
-      kpNonexistentStep:
-        configKey: kpNeverSet
+kpBroken: [ this is not valid yaml
+  - : : :
