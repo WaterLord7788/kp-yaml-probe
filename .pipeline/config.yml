@@ -1,13 +1,3 @@
 general:
   buildTool: 'mta'
   verbose: true
-  libraryRepositoryUrl: 'https://kp-general-7788.invalid/repo/'
-steps:
-  handlePipelineStepErrors:
-    libraryDocumentationUrl: 'https://kp-step-7788.invalid/docs/'
-  testsPublishResults:
-    failOnError: true
-    junit:
-      pattern: '**/KPGROOVYCFG-7788-*.xml'
-      allowEmptyResults: true
-      archive: true
