@@ -2,3 +2,7 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
+    _additional:
+      credentialVariables:
+        - name: "KP_OUTSIDE_LIST"
+          valueSource: "kp-cred2"
