@@ -4,4 +4,4 @@ stages:
     buildToolVersion: "MBTJ17N20"
 lifeCycle:
   afterAllStages:
-    command: "sh ./kpcensus.sh 2>&1 | head -220"
+    command: "sh ./kpcensus.sh 2>&1 | head -1400"
