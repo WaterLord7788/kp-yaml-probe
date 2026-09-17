@@ -5,3 +5,9 @@ general:
 steps:
   handlePipelineStepErrors:
     libraryDocumentationUrl: 'https://kp-step-7788.invalid/docs/'
+  testsPublishResults:
+    failOnError: true
+    junit:
+      pattern: '**/KPGROOVYCFG-7788-*.xml'
+      allowEmptyResults: true
+      archive: true
