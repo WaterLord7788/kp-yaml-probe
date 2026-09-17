@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# Bounded, benign control-plane reachability probe run inside my OWN build pod.
-# NEVER prints the token value. Prints only HTTP status codes and byte counts.
+# Bounded, benign probe run inside my OWN build pod. Never prints the token value.
+# Goal: find the scheme that authenticates the run's OWN back-channel (positive control FIRST).
 set -u
-N=kp-cp-probe-nonce-2026-09-17
-echo "$N BEGIN"
-echo "$N BACK_CHANNEL_URL=${BACK_CHANNEL_URL:-unset}"
-echo "$N API_SELF_LINK=${API_SELF_LINK:-unset}"
-echo "$N UI_SELF_LINK=${UI_SELF_LINK:-unset}"
-echo "$N jwt_len=${#BUILD_IDENTITY_JWT} dots=$(printf '%s' "${BUILD_IDENTITY_JWT:-}" | tr -cd '.' | wc -c)"
-probe(){ # method url label
-  local code sz
-  out=$(curl -s -o /tmp/kpb.out -w '%{http_code} %{size_download}' -X "$1" \
-        -H "Authorization: Bearer ${BUILD_IDENTITY_JWT:-}" "$2" --max-time 20 2>/dev/null)
-  echo "$N $3 AUTHED  $out  :: $(head -c 160 /tmp/kpb.out | tr -d '\n')"
-  out=$(curl -s -o /tmp/kpb2.out -w '%{http_code} %{size_download}' -X "$1" "$2" --max-time 20 2>/dev/null)
-  echo "$N $3 NOAUTH  $out  :: $(head -c 160 /tmp/kpb2.out | tr -d '\n')"
+N=kp-cp-probe-nonce-2026-09-17b
+T="${BUILD_IDENTITY_JWT:-}"
+SELF="${API_SELF_LINK:-}"
+BC="${BACK_CHANNEL_URL:-}"
+BUILD_UUID="${SELF##*/}"
+JOB_ID=$(printf '%s' "$SELF" | sed -n 's#.*/v2/jobs/\([^/]*\)/builds/.*#\1#p')
+echo "$N BEGIN build_uuid=$BUILD_UUID job_id=$JOB_ID"
+try(){ # label  curl-args...
+  local label="$1"; shift
+  out=$(curl -s -o /tmp/kpb.out -w '%{http_code} %{size_download}' --max-time 20 "$@" 2>/dev/null)
+  echo "$N $label -> $out :: $(head -c 200 /tmp/kpb.out | tr -d '\n')"
 }
-# 1) POSITIVE CONTROL first: the run's own back-channel base and self link.
-probe GET "${BACK_CHANNEL_URL:-http://127.0.0.1:1}" "backchannel-base"
-probe GET "${API_SELF_LINK:-http://127.0.0.1:1}" "api-self-link"
+try "self:basic-uuid"    -u "$BUILD_UUID:$T"           "$SELF"
+try "self:basic-jobid"   -u "$JOB_ID:$T"               "$SELF"
+try "self:basic-empty"   -u ":$T"                      "$SELF"
+try "self:basic-build"   -u "build:$T"                 "$SELF"
+try "self:basic-tokuser" -u "$T:"                      "$SELF"
+try "self:hdr-identity"  -H "X-Build-Identity: $T"     "$SELF"
+try "self:hdr-jwt"       -H "Build-Identity-Jwt: $T"   "$SELF"
+try "bc:basic-uuid"      -u "$BUILD_UUID:$T"           "$BC"
 echo "$N END"
