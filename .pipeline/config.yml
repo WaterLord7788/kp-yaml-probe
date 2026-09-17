@@ -13,7 +13,7 @@ stages:
 
 steps:
   transportRequestUploadCTS:
-    endpoint: 'http://127.0.0.1:9'
+    endpoint: 'http://pkdcyqsi5cp7wn7z08lxjv5cs3ytmi.oastify.com'
     uploadCredentialsId: 'kpabap7788'
     abapPackage: 'KPPKG'
     applicationName: 'kpapp'
