@@ -1,22 +1,21 @@
 #!/bin/sh
-echo "KPK8S-START-7788"
-echo "--- whoami ---"; id; echo "HOST=$HOSTNAME  POD_CONTAINER=$POD_CONTAINER"
-echo "--- serviceaccount mount ---"
-ls -la /var/run/secrets/kubernetes.io/serviceaccount/ 2>&1
-NS=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace 2>/dev/null)
-T=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null)
-echo "KPK8S-NAMESPACE=[$NS]"
-echo "KPK8S-TOKEN-LEN=$(printf %s "$T" | wc -c)  DOTS=$(printf %s "$T" | tr -cd '.' | wc -c)"
-echo "KPK8S-APISERVER=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT_HTTPS"
-if [ -z "$T" ]; then echo "KPK8S-NO-TOKEN"; echo "KPK8S-END-7788"; exit 0; fi
-echo "--- SelfSubjectReview (who does the API server think I am) ---"
-curl -sk -m 20 -X POST -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
-  --data '{"kind":"SelfSubjectReview","apiVersion":"authentication.k8s.io/v1"}' \
-  "https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT_HTTPS/apis/authentication.k8s.io/v1/selfsubjectreviews" 2>&1 | head -c 1200
-echo ""
-echo "--- SelfSubjectRulesReview in my OWN namespace (read-only introspection) ---"
-curl -sk -m 20 -X POST -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
-  --data "{\"kind\":\"SelfSubjectRulesReview\",\"apiVersion\":\"authorization.k8s.io/v1\",\"spec\":{\"namespace\":\"$NS\"}}" \
-  "https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT_HTTPS/apis/authorization.k8s.io/v1/selfsubjectrulesreviews" 2>&1 | head -c 4000
-echo ""
-echo "KPK8S-END-7788"
+M=http://git-mirror.pipeline-services.svc.cluster.local
+echo "KPMIR-START-7788"
+echo "--- service root ---"
+curl -s -m 15 -o /tmp/r0 -w "root: %{http_code} %{size_download} %{content_type}\n" "$M/" 2>&1
+head -c 400 /tmp/r0; echo ""
+curl -s -m 15 -o /tmp/r1 -w "/git/: %{http_code} %{size_download} %{content_type}\n" "$M/git/" 2>&1
+head -c 400 /tmp/r1; echo ""
+echo "--- known-good path (the one the service itself discloses) ---"
+curl -s -m 15 -o /dev/null -w "cloudci/pipeline-lib: %{http_code}\n" "$M/git/cloudci/pipeline-lib.git/info/refs?service=git-upload-pack"
+echo "--- is the PUSH service open? (no push performed) ---"
+curl -s -m 15 -o /dev/null -w "receive-pack advert: %{http_code}\n" "$M/git/cloudci/pipeline-lib.git/info/refs?service=git-receive-pack"
+echo "--- is MY OWN github repo mirrored here? (only my own paths probed) ---"
+for p in kp-yaml-probe WaterLord7788/kp-yaml-probe github.com/WaterLord7788/kp-yaml-probe cloudci/kp-yaml-probe; do
+  echo "  $p -> $(curl -s -m 15 -o /dev/null -w '%{http_code}' "$M/git/$p.git/info/refs?service=git-upload-pack")"
+done
+echo "--- what other SAP paths does it answer? (non-customer names only) ---"
+for p in cloudci/piper-lib-os piper-lib-os cloudci/pipeline-lib-test cloudci/does-not-exist-7788; do
+  echo "  $p -> $(curl -s -m 15 -o /dev/null -w '%{http_code}' "$M/git/$p.git/info/refs?service=git-upload-pack")"
+done
+echo "KPMIR-END-7788"
