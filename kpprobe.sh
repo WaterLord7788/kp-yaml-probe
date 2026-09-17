@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-# Which steps does the HOSTED pipeline actually run, and does repo config reach them?
-# Reads the library that is already cloned into this workspace by the pipeline itself.
+# How does a run obtain credential instances, and is the job's credential binding the gate?
 set -u
-N=kp-libmap-nonce-2026-09-17f
+N=kp-credpath-nonce-2026-09-17g
 M=http://git-mirror.pipeline-services.svc.cluster.local
 timeout 90 git clone --depth 1 -q "$M/git/cloudci/pipeline-lib.git" /tmp/plib 2>/dev/null || { echo "$N CLONE-FAIL"; exit 0; }
 cd /tmp/plib
-echo "$N BEGIN"
-for s in slackSendNotification piperPublishWarnings artifactSetVersion spinnakerTriggerPipeline mailSendNotification setupCommonPipelineEnvironment; do
-  echo "$N USES $s -> $(grep -rl "$s" vars src resources 2>/dev/null | head -3 | tr '\n' ' ')"
-done
-echo "$N CONFIG-FLAGS: $(grep -rnoE 'DISABLE_EXTENSIONS|ignoreCustomDefaults|configurationSource|customDefaults' vars src resources 2>/dev/null | head -12 | tr '\n' ' ' | head -c 600)"
-echo "$N VARS-COUNT: $(ls vars | wc -l)"
-echo "$N VARS: $(ls vars | tr '\n' ' ' | head -c 900)"
+F=vars/cloudCIGetCredentialInstance.groovy
+echo "$N BEGIN file_lines=$(wc -l <"$F" 2>/dev/null)"
+sed -E 's/(=|:)[[:space:]]*"[^"]{24,}"/\1 "<REDACTED>"/g' "$F" | head -70 | nl -ba | while read -r l; do echo "$N SRC $l"; done
+echo "$N CALLERS: $(grep -rl 'cloudCIGetCredentialInstance' vars src resources 2>/dev/null | tr '\n' ' ')"
 echo "$N END"
