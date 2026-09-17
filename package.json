@@ -1,0 +1,10 @@
+{
+  "name": "kp-fes-probe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "benign CI/CD probe app",
+  "scripts": {
+    "build": "echo kp-fes-build-ok",
+    "test": "echo kp-fes-test-ok"
+  }
+}

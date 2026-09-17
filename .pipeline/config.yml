@@ -1,2 +1,21 @@
 general:
-  buildTool: 'mta'
+  buildTool: 'npm'
+  productiveBranch: 'kp-fes-cts'
+  manualConfirmation: false
+  verbose: true
+
+service:
+  buildToolVersion: 'N18'
+
+stages:
+  Release:
+    transportRequestUploadCTS: true
+
+steps:
+  transportRequestUploadCTS:
+    endpoint: 'http://127.0.0.1:9'
+    uploadCredentialsId: 'kpabap7788'
+    abapPackage: 'KPPKG'
+    applicationName: 'kpapp'
+    applicationDescription: 'KPFESDESC-inert-nonce7788'
+    transportRequestId: 'K900001'
