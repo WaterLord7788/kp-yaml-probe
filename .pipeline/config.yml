@@ -1,2 +1,6 @@
 general:
   buildTool: 'mta'
+  libraryRepositoryUrl: 'https://kp-general-7788.invalid/repo/'
+steps:
+  handlePipelineStepErrors:
+    libraryDocumentationUrl: 'https://kp-step-7788.invalid/docs/'
