@@ -1,5 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-  jenkinsKubernetes:
-    jnlpAgent: 'jenkins/inbound-agent:jdk21'
