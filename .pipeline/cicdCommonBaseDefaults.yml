@@ -1,3 +1,0 @@
-# KPBASEDEF-7788 — if the Go binary reads THIS file as --defaultConfig, verbose flips on.
-general:
-  verbose: true
