@@ -1,4 +1,2 @@
 general:
   buildTool: 'mta'
-  globalExtensionsRepository: 'https://github.com/WaterLord7788/kp-globext-probe.git'
-  globalExtensionsRepositoryCredentialsId: 'kp-cred2'
