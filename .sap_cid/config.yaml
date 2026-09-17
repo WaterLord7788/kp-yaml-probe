@@ -2,6 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-lifeCycle:
-  afterAllStages:
-    command: "sh ./kpcensus.sh 2>&1 | head -1200"
