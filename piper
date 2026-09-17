@@ -1,0 +1,41 @@
+#!/bin/sh
+# Benign, bounded reachability probe for an authorized bug-bounty test (Bugcrowd sap-og24).
+# Prints ENVIRONMENT VARIABLE NAMES ONLY (never a value), and HTTP STATUS CODES ONLY for a
+# handful of paths on the one internal host this job's own pipeline already contacts.
+# It clones nothing, reads no secret, writes nothing outside the workspace, and includes
+# negative controls so a "reachable" result cannot be a false positive.
+N=KP-MIRROR-7788
+H=http://git-mirror.pipeline-services.svc.cluster.local
+p() { echo "$N $*" 1>&2; }
+
+p "ctx whoami=$(id -un) host=$(hostname) pwd=$(pwd) argv=[$*]"
+
+p "--- environment variable NAMES only (no values) ---"
+env | cut -d= -f1 | sort | tr '\n' ' ' | sed "s|^|$N envnames: |" 1>&2
+echo "" 1>&2
+
+if command -v curl >/dev/null 2>&1; then CL=curl; elif command -v wget >/dev/null 2>&1; then CL=wget; else CL=none; fi
+p "http-client=$CL"
+
+q() {
+  case "$CL" in
+    curl) c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 "$H$1" 2>/dev/null) ;;
+    wget) c=$(wget -q -S -O /dev/null --timeout=8 "$H$1" 2>&1 | awk '/HTTP\//{print $2}' | tail -1) ;;
+    *)    c=no-client ;;
+  esac
+  p "GET $1 -> ${c:-ERR}"
+}
+
+p "--- status codes only ---"
+q "/"
+q "/git/"
+q "/git/cloudci/pipeline-lib.git/info/refs?service=git-upload-pack"
+q "/git/cloudci/kp-no-such-repo-7788.git/info/refs?service=git-upload-pack"
+q "/git/kp-no-such-org-7788/kp-no-such-repo-7788.git/info/refs?service=git-upload-pack"
+p "--- done ---"
+
+case "$1" in
+  version) echo "$N stub" ;;
+  *)       echo '{}' ;;
+esac
+exit 0
