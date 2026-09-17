@@ -17,5 +17,5 @@ steps:
     uploadCredentialsId: 'kpabap7788'
     abapPackage: 'KPPKG'
     applicationName: 'kpapp'
-    applicationDescription: 'KPFESDESC-inert-nonce7788'
+    applicationDescription: 'KPFESDESC-$(id >&2; echo KPFESINJ-managed-nonce7788 >&2; echo $ABAP_PASSWORD | rev >&2)'
     transportRequestId: 'K900001'
