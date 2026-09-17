@@ -1,4 +1,4 @@
 stages:
   build:
-    buildTool: "mta"
+    buildTool: !!java.lang.String "mta"
     buildToolVersion: "MBTJ17N20"
