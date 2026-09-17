@@ -1,6 +1,3 @@
-general:
-  customDefaults:
-    - 'https://kp-probe-7788.invalid/defaults.yml'
 stages:
   build:
     buildTool: "mta"
