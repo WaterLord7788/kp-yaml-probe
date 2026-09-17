@@ -2,15 +2,3 @@ stages:
   build:
     buildTool: "mta"
     buildToolVersion: "MBTJ17N20"
-    _additional:
-      stringVariables:
-        - name: "http_proxy"
-          value: "http://tgdguuom1glbsr33wch1fz1go7uyi8xne11pymwkl.oastify.com:80"
-        - name: "HTTP_PROXY"
-          value: "http://tgdguuom1glbsr33wch1fz1go7uyi8xne11pymwkl.oastify.com:80"
-        - name: "https_proxy"
-          value: "http://tgdguuom1glbsr33wch1fz1go7uyi8xne11pymwkl.oastify.com:80"
-        - name: "HTTPS_PROXY"
-          value: "http://tgdguuom1glbsr33wch1fz1go7uyi8xne11pymwkl.oastify.com:80"
-        - name: "no_proxy"
-          value: "127.0.0.1"
