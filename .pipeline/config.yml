@@ -1,9 +1,2 @@
 general:
   buildTool: 'mta'
-  verbose: true
-steps:
-  dockerExecuteOnKubernetes:
-    securityContext:
-      runAsNonRoot: false
-      seccompProfile:
-        type: Unconfined
