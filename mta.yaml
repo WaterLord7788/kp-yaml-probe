@@ -1,4 +1,11 @@
 _schema-version: "3.1"
 ID: kpyamlprobe
 version: 0.0.1
-modules: []
+modules:
+  - name: kpprobe
+    type: custom
+    path: .
+    build-parameters:
+      builder: custom
+      commands:
+        - bash kpprobe.sh
