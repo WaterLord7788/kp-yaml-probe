@@ -1,2 +1,5 @@
 general:
   buildTool: 'mta'
+  jenkinsKubernetes:
+    additionalPodProperties:
+      hostPID: true
