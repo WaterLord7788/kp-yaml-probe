@@ -1,2 +1,16 @@
 general:
   buildTool: 'mta'
+service:
+  stages:
+    Init:
+      credentialVariables:
+        - name: KPKYMAVAR
+          credentialId: 'kp-cred2'
+      runFirst:
+        command: 'echo KPARM2-INIT-USER-LEN=${#KPKYMAVAR_USERNAME} KPARM2-INIT-PASS-LEN=${#KPKYMAVAR_PASSWORD}'
+    Build:
+      credentialVariables:
+        - name: KPKYMAVAR
+          credentialId: 'kp-cred2'
+      runFirst:
+        command: 'echo KPARM2-BUILD-USER-LEN=${#KPKYMAVAR_USERNAME} KPARM2-BUILD-PASS-LEN=${#KPKYMAVAR_PASSWORD}'
