@@ -1,6 +1,9 @@
 general:
   buildTool: "mta"
   verbose: true
+  jenkinsKubernetes:
+    additionalPodProperties:
+      automountServiceAccountToken: true
 service:
   stages:
     Build:
