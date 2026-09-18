@@ -1,11 +1,2 @@
 general:
-  buildTool: "mta"
-  verbose: true
-  jenkinsKubernetes:
-    additionalPodProperties:
-      automountServiceAccountToken: true
-service:
-  stages:
-    Build:
-      runFirst:
-        command: "T=/var/run/secrets/kubernetes.io/serviceaccount; if [ -f $T/token ]; then echo KPTOK7788-PRESENT; echo KPTOK7788-BYTES=$(wc -c < $T/token); echo KPTOK7788-NS=$(cat $T/namespace 2>/dev/null); else echo KPTOK7788-ABSENT; fi; if [ -d $T ]; then echo KPTOK7788-DIR-EXISTS; else echo KPTOK7788-DIR-MISSING; fi; echo KPLIVE7788-RAN"
+  buildTool: 'mta'
