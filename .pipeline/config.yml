@@ -1,14 +1,21 @@
 general:
   buildTool: 'mta'
   jenkinsKubernetes:
-    jnlpAgent: 'docker-hub.common.repositories.cloud.sap/jenkins/inbound-agent:jdk21'
+    resources:
+      DEFAULT:
+        requests:
+          cpu: '10m'
+          memory: '16Mi'
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
 service:
   stages:
     Build:
       runFirst:
         command: |
           set -x
-          echo KPJNLP7788-VARIANT=mirrorTagAgent
-          echo KPJNLP7788-UID=$(id -u) KPJNLP7788-GID=$(id -g)
-          echo KPJNLP7788-HOST=$(hostname)
-          echo KPJNLP7788-RAN
+          echo KPRES7788-VARIANT=downwardResources
+          echo KPRES7788-CPUMAX=$(cat /sys/fs/cgroup/cpu.max 2>/dev/null || cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null)
+          echo KPRES7788-MEMMAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null)
+          echo KPRES7788-RAN
