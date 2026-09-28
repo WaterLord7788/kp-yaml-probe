@@ -1,12 +1,15 @@
 general:
   buildTool: 'mta'
+  jenkinsKubernetes:
+    securityContext:
+      runAsUser: 0
 service:
   stages:
     Build:
       runFirst:
         command: |
           set -x
-          echo KPSC7788-VARIANT=baseline
+          echo KPSC7788-VARIANT=controlRunAsUser
           echo KPSC7788-UID=$(id -u) KPSC7788-GID=$(id -g)
           echo KPSC7788-GROUPS=$(id -G | tr ' ' ,)
           echo KPSC7788-SECCOMP=$(awk '/^Seccomp:/{print $2}' /proc/self/status)
