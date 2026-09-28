@@ -1,4 +1,10 @@
 stages:
   build:
-    buildTool: "mta"
-    buildToolVersion: "MBTJ17N20"
+    buildTool: mta
+    buildToolVersion: MBTJ17N20
+    runFirst:
+      command: echo KPCID7788-RAN
+general:
+  jenkinsKubernetes:
+    securityContext:
+      runAsUser: 0
