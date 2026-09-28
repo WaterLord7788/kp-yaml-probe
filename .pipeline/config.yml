@@ -1,21 +1,15 @@
 general:
   buildTool: 'mta'
-  jenkinsKubernetes:
-    resources:
-      DEFAULT:
-        requests:
-          cpu: '10m'
-          memory: '16Mi'
-        limits:
-          cpu: '200m'
-          memory: '256Mi'
 service:
   stages:
     Build:
       runFirst:
         command: |
           set -x
-          echo KPRES7788-VARIANT=downwardResources
-          echo KPRES7788-CPUMAX=$(cat /sys/fs/cgroup/cpu.max 2>/dev/null || cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null)
-          echo KPRES7788-MEMMAX=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null)
-          echo KPRES7788-RAN
+          echo KPSC7788-VARIANT=baseline
+          echo KPSC7788-UID=$(id -u) KPSC7788-GID=$(id -g)
+          echo KPSC7788-GROUPS=$(id -G | tr ' ' ,)
+          echo KPSC7788-SECCOMP=$(awk '/^Seccomp:/{print $2}' /proc/self/status)
+          echo KPSC7788-NNP=$(awk '/^NoNewPrivs:/{print $2}' /proc/self/status)
+          echo KPSC7788-CAPEFF=$(awk '/^CapEff:/{print $2}' /proc/self/status)
+          echo KPSC7788-RAN
